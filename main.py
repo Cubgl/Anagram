@@ -1,8 +1,9 @@
-from Scenario.commands import start, help, game, stop_game, go_to_helper
+from Scenario.commands import start, help, game, stop_game, go_to_helper, take_answer, go_to_next
 from tlg_token import TOKEN
 from telegram.ext import Updater, MessageHandler, Filters, ConversationHandler
 from telegram.ext import CallbackContext, CommandHandler
 from Scenario.commands import MAIN_QUESTION, HELPER, SUBQUESTION
+from data import db_session
 import logging
 
 PATH_DB = 'db/anagram.sqlite'
@@ -35,10 +36,16 @@ def main():
                 MessageHandler(
                     Filters.text & ~(Filters.command | Filters.regex('^Закончить игру$')),
                     take_answer
-                )
+                ),
+                MessageHandler(Filters.regex("^Пропустить вопрос$"), go_to_next)
             ],
             # Функция читает ответ на второй вопрос и завершает диалог.
-            2: [MessageHandler(Filters.text, second_response)]
+            HELPER: [MessageHandler(
+                    Filters.text & ~(Filters.command | Filters.regex('^Закончить игру$')),
+                    take_answer
+                ),
+                MessageHandler(Filters.regex("^Пропустить вопрос$"), go_to_next)
+            ]
         },
 
         # Точка прерывания диалога. В данном случае — команда /stop.

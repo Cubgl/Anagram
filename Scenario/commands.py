@@ -1,4 +1,5 @@
 from telegram import ReplyKeyboardMarkup
+from telegram.ext import ConversationHandler
 
 from Scenario.TheGame import TheGame
 
@@ -37,18 +38,16 @@ def help(update, context):
     update.message.reply_text('/group число')
     update.message.reply_text(
         ' Вывести группу анаграмм, в которой количество слов равно заданному числу.')
-    update.message.reply_text('/game')
-    update.message.reply_text(' Игра на разгадывание анаграмм.')
+    update.message.reply_text('/game     Игра на разгадывание анаграмм.')
     update.message.reply_text('/cod фраза')
     update.message.reply_text(
         ''' Кодирование фразы анаграммой. Попробуйте закодировать свои фамилию и имя.''')
-    update.message.reply_text('/close')
-    update.message.reply_text('Выход', reply_markup=main_markup)
+    update.message.reply_text('/close     Выход', reply_markup=main_markup)
 
 
 def game(update, context):
     update.message.reply_text(
-        '''Добро пожаловать в *игру*\. Вам будет предложено 5 загадок. 
+        '''Добро пожаловать в *игру*\. Вам будет предложено 5 загадок\. 
         Постарайтесь отгадать слова, описанные в загадках\.''',
         parse_mode='MarkdownV2')
     update.message.reply_text('Вы всегда можете закончить игру словами "Закончить игру".')
@@ -61,23 +60,40 @@ def game(update, context):
 
 
 def go_to_helper(update, context):
+    context.user_data['was_helper'] = True
     update.message.reply_text('Вот подсказка.')
-    update.message.reply_text(context.user_data['game'].get_helper(), reply_markup=game_cuting_markup)
+    update.message.reply_text(context.user_data['game'].get_helper(),
+                              reply_markup=game_cuting_markup)
     update.message.reply_text('Попробуйте отгадать теперь.')
-    return SUBQUESTION
+    return HELPER
 
 
 def take_answer(update, context):
     user_answer = update.message.text
-    if user_answer.lower() == context.user_data['game'].get_answer():
+    reply_markup_local = game_cuting_markup if 'was_helper' in context.user_data else game_markup
+    if context.user_data['game'].checking_answer(user_answer.lower()):
         context.user_data['game'].set_stats(True)
+        update.message.reply_text('Верно!', reply_markup=reply_markup_local)
     else:
         context.user_data['game'].set_stats(False)
+        update.message.reply_text('К сожалению, это неправильный ответ!',
+                                  reply_markup=reply_markup_local)
+    return go_to_next(update, context)
 
-
+def go_to_next(update, context):
+    context.user_data['game'].set_stats(False)
+    if context.user_data['game'].the_end():
+        return stop_game(update, context)
+    context.user_data['game'].take_task()
+    update.message.reply_text(f"Вопрос №{context.user_data['game'].pos_in_game}.")
+    for line in context.user_data['game'].get_question():
+        update.message.reply_text(line)
+    update.message.reply_text('В ответе должно быть только одно слово.', reply_markup=game_markup)
+    return MAIN_QUESTION
 
 def stop_game(update, context):
     user_data = context.user_data
     update.message.reply_text('Спасибо за игру!')
     update.message.reply_text(
-        "Вы отгадали {user_data['game'].score} из {user_data['game'].pos_in_game}.")
+        f"Вы отгадали {user_data['game'].score} из {user_data['game'].pos_in_game}.")
+    return ConversationHandler.END

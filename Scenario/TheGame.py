@@ -7,6 +7,7 @@ from data.enigma import Enigma
 class TheGame:
     def __init__(self):
         self.db_sess = db_session.create_session()
+        random.seed()
         self.score = 0
         self.pos_in_game = 0
         self.count_tasks = 5
@@ -15,7 +16,7 @@ class TheGame:
         self.used = [False] * len(self.tasks)
         self.attempts = [None] * len(self.tasks)
         self.indexes = self.make_new_game()
-        self.cur_index = self.take_task()
+        self.take_task()
 
     def load_tasks(self):
         for enigma in self.db_sess.query(Enigma).all():
@@ -33,18 +34,22 @@ class TheGame:
             while number in numbers:
                 number = random.randint(0, len(self.tasks) - 1)
             numbers.append(number)
+        if len(numbers) > self.count_tasks:
+            random.shuffle(numbers)
+            numbers = numbers[:5]
         for_sort = []
         for index in numbers:
             for_sort.append((index, self.get_difficult(self.tasks[index])))
-            for_sort.sort(key=lambda x: x[1])
+        for_sort.sort(key=lambda x: x[1])
+        print(for_sort)
         return list(map(lambda x: x[0], for_sort))
 
     def take_task(self):
-        index = self.indexes[0]
-        self.used[index] = True
+        self.cur_index = self.indexes[0]
+        self.used[self.cur_index] = True
         self.pos_in_game += 1
         self.indexes = self.indexes[1:]
-        return index
+        print('indexes = ', self.indexes)
 
     def the_end(self):
         return self.pos_in_game == self.count_tasks
@@ -52,8 +57,8 @@ class TheGame:
     def get_question(self):
         return [line.strip() for line in self.tasks[self.cur_index].question.split('|')]
 
-    def get_answer(self):
-        return self.tasks[self.cur_index].answer
+    def checking_answer(self, user_answer):
+        return self.tasks[self.cur_index].check_answer(user_answer)
 
     def get_subquestion(self):
         return self.tasks[self.cur_index].subquestion

@@ -20,10 +20,10 @@ class Enigma(SqlAlchemyBase):
         self.answer = generate_password_hash(answer)
 
     def check_answer(self, answer):
-        return check_password_hash(self.hashed_password, answer)
+        return check_password_hash(self.answer, answer)
 
     def set_subanswer(self, subanswer):
         self.subanswer = generate_password_hash(subanswer)
 
     def check_subanswer(self, subanswer):
-        return check_password_hash(self.hashed_password, subanswer)
+        return check_password_hash(self.subanswer, subanswer)
