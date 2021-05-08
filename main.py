@@ -1,4 +1,5 @@
-from Scenario.commands import start, help, game, stop_game, go_to_helper, take_answer, go_to_next
+from Scenario.commands import start, help, game, stop_game, go_to_helper, take_answer, \
+    go_to_next_task
 from tlg_token import TOKEN
 from telegram.ext import Updater, MessageHandler, Filters, ConversationHandler
 from telegram.ext import CallbackContext, CommandHandler
@@ -34,17 +35,19 @@ def main():
             MAIN_QUESTION: [
                 MessageHandler(Filters.regex("^Взять подсказку$"), go_to_helper),
                 MessageHandler(
-                    Filters.text & ~(Filters.command | Filters.regex('^Закончить игру$')),
+                    Filters.text & ~(Filters.command | Filters.regex("^Пропустить вопрос$") | \
+                                     Filters.regex('^Закончить игру$')),
                     take_answer
                 ),
-                MessageHandler(Filters.regex("^Пропустить вопрос$"), go_to_next)
+                MessageHandler(Filters.regex("^Пропустить вопрос$"), go_to_next_task)
             ],
             # Функция читает ответ на второй вопрос и завершает диалог.
             HELPER: [MessageHandler(
-                    Filters.text & ~(Filters.command | Filters.regex('^Закончить игру$')),
+                    Filters.text & ~(Filters.command | Filters.regex("^Пропустить вопрос$") | \
+                                     Filters.regex('^Закончить игру$')),
                     take_answer
                 ),
-                MessageHandler(Filters.regex("^Пропустить вопрос$"), go_to_next)
+                MessageHandler(Filters.regex("^Пропустить вопрос$"), go_to_next_task)
             ]
         },
 

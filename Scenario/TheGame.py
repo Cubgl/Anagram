@@ -17,6 +17,24 @@ class TheGame:
         self.attempts = [None] * len(self.tasks)
         self.indexes = self.make_new_game()
         self.take_task()
+        self.sed_phrases = [
+            'К сожаленью, это неправильный ответ.', 'Увы, но это неверно.',
+            'Не удалось угадать.', 'Этот ответ я не могу принять как правильный.',
+            'Возможно, в следующий раз получится лучше, но пока это "холостой выстрел".',
+            'Нет, это не так.', "Правильный ответ содержит другое слово", "Неверно!"
+        ]
+        self.ok_phrases = [
+            'Совершенно верно!', 'Правильно!', 'Да, это правильный ответ!'
+            'Умница, это точный ответ.', 'Молодец, этот ответ подходит.',
+            'Это верное слово.', 'ОК, ответ принят.', 'Совершенно точно!',
+            'Да, это так.', 'Прямо в "яблочко"!', "Верно!"
+        ]
+
+    def get_phrase_for_wrong_answer(self):
+        return random.choice(self.sed_phrases)
+
+    def get_phrase_for_ok_answer(self):
+        return random.choice(self.ok_phrases)
 
     def load_tasks(self):
         for enigma in self.db_sess.query(Enigma).all():
