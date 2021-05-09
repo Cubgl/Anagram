@@ -15,7 +15,7 @@ class TheGame:
         self.load_tasks()
         self.used = [False] * len(self.tasks)
         self.attempts = [None] * len(self.tasks)
-        self.indexes = self.make_new_game()
+        self.make_new_game()
         self.take_task()
         self.sed_phrases = [
             'К сожаленью, это неправильный ответ.', 'Увы, но это неверно.',
@@ -24,7 +24,7 @@ class TheGame:
             'Нет, это не так.', "Правильный ответ содержит другое слово", "Неверно!"
         ]
         self.ok_phrases = [
-            'Совершенно верно!', 'Правильно!', 'Да, это правильный ответ!'
+            'Совершенно верно!', 'Правильно!', 'Да, это правильный ответ!',
             'Умница, это точный ответ.', 'Молодец, этот ответ подходит.',
             'Это верное слово.', 'ОК, ответ принят.', 'Совершенно точно!',
             'Да, это так.', 'Прямо в "яблочко"!', "Верно!"
@@ -46,7 +46,12 @@ class TheGame:
         return task.difficult
 
     def make_new_game(self):
+        self.pos_in_game = 0
+        self.score = 0
         numbers = [i for i in range(len(self.tasks)) if not self.used[i]]
+        if len(numbers) == 0:
+            self.used = [False] * len(self.tasks)
+            numbers = [i for i in range(len(self.tasks)) if not self.used[i]]
         while len(numbers) < self.count_tasks:
             number = random.randint(0, len(self.tasks) - 1)
             while number in numbers:
@@ -54,20 +59,19 @@ class TheGame:
             numbers.append(number)
         if len(numbers) > self.count_tasks:
             random.shuffle(numbers)
-            numbers = numbers[:5]
+            numbers = numbers[:self.count_tasks]
         for_sort = []
         for index in numbers:
             for_sort.append((index, self.get_difficult(self.tasks[index])))
         for_sort.sort(key=lambda x: x[1])
-        print(for_sort)
-        return list(map(lambda x: x[0], for_sort))
+        self.indexes = list(map(lambda x: x[0], for_sort))
+        self.take_task()
 
     def take_task(self):
         self.cur_index = self.indexes[0]
         self.used[self.cur_index] = True
         self.pos_in_game += 1
         self.indexes = self.indexes[1:]
-        print('indexes = ', self.indexes)
 
     def the_end(self):
         return self.pos_in_game == self.count_tasks

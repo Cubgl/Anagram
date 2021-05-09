@@ -1,9 +1,12 @@
+import os
 from pprint import pprint
 
 from Tools.DividerWord import DividerWord
 
 PATH_FOR_DATA = '../Dict'
 FILENAME_DICT = 'slovar.TXT'
+FILENAME_BINARY_DICT = 'dictionary.dat'
+FILENAME_BINARY_WORDS = 'words.dat'
 
 
 class Solver():
@@ -49,7 +52,6 @@ class Solver():
         if count_words == 2:
             return
         for first, second, third in self.divider.generate_three_split():
-            # print(first, second)
             if second == '':
                 second = first
             if third == '':
@@ -69,18 +71,16 @@ class Solver():
 class AnagramKnow():
     def __init__(self):
         self.dict_anagram_simple = DictAnagramSimple()
-        self.dict_len_groups = DictLenGroups(self.dict_anagram_simple.dictionary)
+        self.dict_len_groups = DictLenGroups(self.dict_anagram_simple.dictionary).dict_for_len_group
 
     def is_anagram(self, word):
         mask = ''.join(sorted(word))
         return mask in self.dict_anagram_simple.dictionary and \
                word in self.dict_anagram_simple.dictionary[mask]
 
-    def get_word(self, mask):
-        if mask not in self.dict_anagram_simple.dictionary:
-            return None
-        else:
-            return self.dict_anagram_simple.dictionary[mask]
+    def get_anagram(self, word):
+        mask = ''.join(sorted(word))
+        return self.dict_anagram_simple.dictionary.get(mask)
 
     def know_word(self, word):
         return word in self.dict_anagram_simple.words
@@ -88,11 +88,20 @@ class AnagramKnow():
     def know_mask(self, mask):
         return mask in self.dict_anagram_simple.dictionary
 
+    def get_group(self, number):
+        return self.dict_len_groups.get(number)
+
+
 class DictAnagramSimple():
     def __init__(self):
         self.dictionary = {}
         self.words = set()
-        self.load_words_from_textfile()
+        if os.path.exists(PATH_FOR_DATA + '/' + FILENAME_BINARY_DICT) and \
+            os.path.exists(PATH_FOR_DATA + '/' + FILENAME_BINARY_WORDS):
+            self.load_dict_from_binary_file()
+            self.load_words_from_binary_file()
+        else:
+            self.load_words_from_textfile()
         self.dict_no_repeat = {}
         self.create_dict_no_repeat()
 
@@ -117,6 +126,23 @@ class DictAnagramSimple():
                 sorted_list = sorted(list(group))
                 print(f'{mask}:', *sorted_list, file=textfile)
 
+    def print_dict_to_binary_file(self):
+        with open(PATH_FOR_DATA + '/' + FILENAME_BINARY_DICT, 'wb') as binary_file:
+            binary_file.write(bytes(str(self.dictionary).encode()))
+
+    def print_words_to_binary_file(self):
+        with open(PATH_FOR_DATA + '/' + FILENAME_BINARY_WORDS, 'wb') as binary_file:
+            binary_file.write(bytes(str(self.words).encode()))
+
+    def load_dict_from_binary_file(self):
+        with open(PATH_FOR_DATA + '/' + FILENAME_BINARY_DICT, 'rb') as binary_file:
+            data_dict = binary_file.read()
+        self.dictionary = eval(f'{data_dict.decode()}')
+
+    def load_words_from_binary_file(self):
+        with open(PATH_FOR_DATA + '/' + FILENAME_BINARY_WORDS, 'rb') as binary_file:
+            data_words = binary_file.read()
+        self.words = eval(f'{data_words.decode()}')
 
 class DictLenGroups():
     def __init__(self, simple_dict):
@@ -146,7 +172,5 @@ class DictLenGroups():
 
 
 if __name__ == '__main__':
-    oracle = Solver('Перескоков Алексей')
-    oracle.solve()
-
-    pprint(oracle.result)
+    my = AnagramKnow()
+    print(my.get_anagram('американское'))
